@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Age and Gender Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col items-center">
+    <header class="w-full bg-blue-600 text-white py-4 shadow-md">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold">Age and Gender Detection</h1>
+        </div>
+    </header>
+
+    <main class="container mx-auto my-8 p-4 bg-white shadow rounded">
+        <h2 class="text-xl font-semibold text-gray-700 text-center mb-6">Upload an Image</h2>
+        <form id="upload-form" class="flex flex-col items-center" enctype="multipart/form-data">
+            <input type="file" accept="image/*" name="file" id="file" class="mb-4 block w-full text-sm text-gray-500 
+                   file:mr-4 file:py-2 file:px-4
+                   file:rounded file:border-0
+                   file:text-sm file:font-semibold
+                   file:bg-blue-50 file:text-blue-600
+                   hover:file:bg-blue-100" required>
+            <button type="submit"
+                class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Submit</button>
+        </form>
+        <div id="results" class="mt-8">
+            <h3 class="text-lg font-semibold text-gray-700">Results:</h3>
+            <div id="results-container" class="mt-4 grid gap-4 grid-cols-1 md:grid-cols-2"></div>
+        </div>
+    </main>
+
+    <section class="container mx-auto my-8 p-4 bg-white shadow rounded">
+        <h2 class="text-xl font-semibold text-gray-700 text-center mb-6">Webcam Detection</h2>
+        <div class="flex justify-center">
+            <a href="/webcam" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Open
+                Webcam</a>
+        </div>
+    </section>
+
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('file');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file to upload.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const resultsContainer = document.getElementById('results-container');
+            resultsContainer.innerHTML = '<p class="text-gray-600">Processing...</p>';
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const results = await response.json();
+                displayResults(resultsContainer, results);
+
+            } catch (error) {
+                resultsContainer.innerHTML = '<p class="text-red-500">Error processing the image.</p>';
+                console.error(error);
+            }
+        });
+
+        function displayResults(container, results) {
+            container.innerHTML = '';
+            results.forEach(result => {
+                const { gender, age, bbox } = result;
+                const resultCard = document.createElement('div');
+                resultCard.className = 'p-4 bg-gray-100 rounded shadow';
+                resultCard.innerHTML = `
+                    <p><strong>Gender:</strong> ${gender}</p>
+                    <p><strong>Age:</strong> ${age}</p>
+                    <p><strong>Bounding Box:</strong> [${bbox.join(', ')}]</p>
+                `;
+                container.appendChild(resultCard);
+            });
+        }
+    </script>
+</body>
+
+</html>
